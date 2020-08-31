@@ -1,0 +1,12 @@
+{
+  "eslint disable line": {
+    "prefix": "eslint",
+    "body": ["// eslint-disable-line $1"],
+    "description": "eslint disable line"
+  },
+  "eslint disable next line": {
+    "prefix": "eslint",
+    "body": ["// eslint-disable-next-line"],
+    "description": "eslint disable next line"
+  }
+}

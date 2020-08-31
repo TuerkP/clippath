@@ -1,0 +1,50 @@
+{
+  "New React Component": {
+    "prefix": "new",
+    "body": [
+      "import React, {Component} from \"react\";",
+      "import {connect} from \"react-redux\";",
+      "import {Dispatch} from \"redux\";",
+      "import {IAppState} from \"../Store\";",
+      "import {withStyles, WithStyles, Theme, createStyles} from \"@material-ui/core\";",
+      "",
+      "const styles = (theme: Theme) => createStyles({});",
+      "",
+      "interface IProps extends WithStyles<typeof styles> {}",
+      "interface IState {}",
+      "",
+      "const mapStateToProps = (state: IAppState) => {",
+      "  return {};",
+      "};",
+      "",
+      "const mapDispatchToProps = (dispatch: Dispatch) => {",
+      "  return {};",
+      "};",
+      "",
+      "class $TM_FILENAME_BASE extends Component<IProps, IState> {",
+      "  constructor(props: IProps) {",
+      "    super(props);",
+      "    this.state = {};",
+      "  }",
+      "",
+      "  render = () => {",
+      "    return <>$1</>;",
+      "  };",
+      "}",
+      "",
+      "export default connect(mapStateToProps, mapDispatchToProps)(withStyles(styles)($TM_FILENAME_BASE));",
+      ""
+    ],
+    "description": "Creates a new empty react component class."
+  },
+  "eslint disable line": {
+    "prefix": "eslint",
+    "body": ["// eslint-disable-line $1"],
+    "description": "eslint disable line"
+  },
+  "eslint disable next line": {
+    "prefix": "eslint",
+    "body": ["// eslint-disable-next-line"],
+    "description": "eslint disable next line"
+  }
+}
