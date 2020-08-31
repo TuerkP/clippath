@@ -1,4 +1,4 @@
-import {createStyles, withStyles, WithStyles} from "@material-ui/core";
+import {createStyles, withStyles, WithStyles, Button} from "@material-ui/core";
 import React, {Component} from "react";
 import {POINT_BOX_SIZE} from "./Constants";
 
@@ -8,26 +8,35 @@ const styles = () =>
       width: "100%",
       height: "100%",
       display: "flex",
+      flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
     },
-    img: {
+    container: {
       position: "relative",
-      width: "400px",
-      height: "500px",
       border: "1px solid black",
       cursor: "crosshair",
+    },
+    img: {
+      display: "block",
     },
     point: {
       position: "absolute",
       width: `${POINT_BOX_SIZE}px`,
       height: `${POINT_BOX_SIZE}px`,
-      border: "1px solid green",
+      border: "2px solid green",
       cursor: "grab",
     },
     svg: {
+      position: "absolute",
+      top: 0,
+      left: 0,
       width: "100%",
       height: "100%",
+    },
+    button: {
+      marginTop: "10px",
+      marginLeft: "10px"
     },
   });
 
@@ -37,14 +46,23 @@ interface Point {
   left: number;
 }
 
-type Props = WithStyles<typeof styles>;
+interface Props extends WithStyles<typeof styles> {
+  src: string;
+  alt: string;
+  points?: Point[];
+  onSave?: (points: Point[]) => void;
+}
+
 interface State {
   points: Point[];
   active: number;
 }
 
 class ClipPathBilder extends Component<Props, State> {
-  public readonly state: State = {points: [], active: -1};
+  constructor(props: Props) {
+    super(props);
+    this.state = {points: props.points ?? [], active: -1};
+  }
 
   private addPoint = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const newPoint: Point = {
@@ -74,48 +92,62 @@ class ClipPathBilder extends Component<Props, State> {
     this.setState({active: -1});
   };
 
-  private createLine = (point: Point, next: Point) => {
+  private createLine = (point: Point, idx: number, points: Point[]) => {
+    if (points.length < 2) return null;
+    const next = idx === points.length - 1 ? points[0] : points[idx + 1];
     const key = `${point.top}x${point.left}_line`;
     return (
-      <line key={key} x1={point.left} y1={point.top} x2={next.left} y2={next.top} stroke="black" />
+      <line key={key} x1={point.left} y1={point.top} x2={next.left} y2={next.top} stroke="white" />
     );
   };
 
-  render() {
+  private createPoint = (point: Point, idx: number) => {
     const {classes} = this.props;
+    const {active} = this.state;
+    const key = `${point.top}x${point.left}_box`;
+    const style = {
+      top: point.top - (0.5 * POINT_BOX_SIZE + 2), // 2px fadenkreuz
+      left: point.left - (0.5 * POINT_BOX_SIZE + 2), // 2px fadenkreuz
+      cursor: idx === active ? "grabbing" : "grab",
+    };
+    return (
+      <div key={key} style={style} className={classes.point} onMouseDown={this.grabPoint(idx)} />
+    );
+  };
+
+  private onSave = () => {
+    const {onSave} = this.props;
+    if (onSave !== undefined) {
+      onSave(this.state.points);
+    }
+  };
+
+  private onDelete = () => {
+    this.setState({points: []})
+  }
+
+  render() {
+    const {src, alt, classes} = this.props;
     const {points, active} = this.state;
 
     return (
       <div className={classes.root}>
         <div
-          className={classes.img}
+          className={classes.container}
           onMouseUp={active === -1 ? this.addPoint : this.releasePoint}
           onMouseMove={active > -1 ? this.movePoint : () => false}
-          id="staticImage"
         >
-          <svg className={classes.svg}>
-            {points.map((point, idx, points) => {
-              if (points.length < 2) return null;
-              const next = idx === points.length - 1 ? points[0] : points[idx + 1];
-              return this.createLine(point, next);
-            })}
-          </svg>
-          {points.map((point, idx) => {
-            const key = `${point.top}x${point.left}_box`;
-            const style = {
-              top: point.top - (0.5 * POINT_BOX_SIZE + 2), // 2px fadenkreuz
-              left: point.left - (0.5 * POINT_BOX_SIZE + 2), // 2px fadenkreuz
-              cursor: idx === active ? "grabbing" : "grab",
-            };
-            return (
-              <div
-                key={key}
-                style={style}
-                className={classes.point}
-                onMouseDown={this.grabPoint(idx)}
-              />
-            );
-          })}
+          <img src={src} alt={alt} className={classes.img} />
+          <svg className={classes.svg}>{points.map(this.createLine)}</svg>
+          {points.map(this.createPoint)}
+        </div>
+        <div>
+          <Button className={classes.button} variant="outlined" onClick={this.onSave}>
+            Speichern
+          </Button>
+          <Button className={classes.button} variant="outlined" onClick={this.onDelete}>
+            Löschen
+          </Button>
         </div>
       </div>
     );

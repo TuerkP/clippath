@@ -17,7 +17,10 @@ class HomePage extends Component<Props> {
     const {classes} = this.props;
     return (
       <div className={classes.root}>
-        <ClipPathBilder />
+        <ClipPathBilder
+          src=""
+          alt="sdf"
+        />
       </div>
     );
   }
