@@ -1,4 +1,5 @@
 import {createStyles, withStyles, WithStyles, Button} from "@material-ui/core";
+import {CSSProperties} from "@material-ui/core/styles/withStyles";
 import React, {Component} from "react";
 import {POINT_BOX_SIZE} from "./Constants";
 
@@ -12,10 +13,18 @@ const styles = () =>
       alignItems: "center",
       justifyContent: "center",
     },
-    container: {
-      position: "relative",
+    scrollContainer: {
+      overflow: "auto",
       border: "1px solid black",
+      position: "relative",
+      width: "500px",
+      height: "500px",
+    },
+    container: {
       cursor: "crosshair",
+      width: "fit-content",
+      height: "fit-content",
+      position: "relative",
     },
     img: {
       display: "block",
@@ -34,9 +43,16 @@ const styles = () =>
       width: "100%",
       height: "100%",
     },
-    button: {
+    buttonContainer: {
+      display: "flex",
+      justifyContent: "center",
       marginTop: "10px",
-      marginLeft: "10px"
+    },
+    button: {
+      marginRight: "10px",
+      "&:last-child": {
+        marginRight: "0px",
+      },
     },
   });
 
@@ -56,12 +72,13 @@ interface Props extends WithStyles<typeof styles> {
 interface State {
   points: Point[];
   active: number;
+  zoom: number;
 }
 
 class ClipPathBilder extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = {points: props.points ?? [], active: -1};
+    this.state = {points: props.points ?? [], active: -1, zoom: 1};
   }
 
   private addPoint = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -117,37 +134,64 @@ class ClipPathBilder extends Component<Props, State> {
 
   private onSave = () => {
     const {onSave} = this.props;
+    console.log(this.state.points.map((p) => `${p.top}px ${p.left}px`).join(", "));
     if (onSave !== undefined) {
       onSave(this.state.points);
     }
   };
 
   private onDelete = () => {
-    this.setState({points: []})
-  }
+    this.setState({points: []});
+  };
+
+  private onZoomIn = () => this.setState({zoom: this.state.zoom + 0.1});
+
+  private onZoomOut = () => this.setState({zoom: this.state.zoom - 0.1});
+
+  private onZoomReset = () => this.setState({zoom: 1});
 
   render() {
     const {src, alt, classes} = this.props;
-    const {points, active} = this.state;
+    const {points, active, zoom} = this.state;
+    const zoomStyle: CSSProperties = {
+      transform: `scale(${zoom})`,
+      transformOrigin: "0 0",
+    };
 
     return (
       <div className={classes.root}>
-        <div
-          className={classes.container}
-          onMouseUp={active === -1 ? this.addPoint : this.releasePoint}
-          onMouseMove={active > -1 ? this.movePoint : () => false}
-        >
-          <img src={src} alt={alt} className={classes.img} />
-          <svg className={classes.svg}>{points.map(this.createLine)}</svg>
-          {points.map(this.createPoint)}
+        <div className={classes.scrollContainer}>
+          <div
+            className={classes.container}
+            style={zoomStyle}
+            onMouseUp={active === -1 ? this.addPoint : this.releasePoint}
+            onMouseMove={active > -1 ? this.movePoint : () => false}
+          >
+            <img src={src} alt={alt} className={classes.img} />
+            <svg className={classes.svg}>{points.map(this.createLine)}</svg>
+            {points.map(this.createPoint)}
+          </div>
         </div>
         <div>
-          <Button className={classes.button} variant="outlined" onClick={this.onSave}>
-            Speichern
-          </Button>
-          <Button className={classes.button} variant="outlined" onClick={this.onDelete}>
-            Löschen
-          </Button>
+          <div className={classes.buttonContainer}>
+            <Button className={classes.button} variant="outlined" onClick={this.onSave}>
+              Speichern
+            </Button>
+            <Button className={classes.button} variant="outlined" onClick={this.onDelete}>
+              Löschen
+            </Button>
+          </div>
+          <div className={classes.buttonContainer}>
+            <Button className={classes.button} variant="outlined" onClick={this.onZoomIn}>
+              +
+            </Button>
+            <Button className={classes.button} variant="outlined" onClick={this.onZoomReset}>
+              0
+            </Button>
+            <Button className={classes.button} variant="outlined" onClick={this.onZoomOut}>
+              -
+            </Button>
+          </div>
         </div>
       </div>
     );
