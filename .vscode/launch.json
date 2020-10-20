@@ -7,7 +7,7 @@
         {
             "type": "pwa-chrome",
             "request": "launch",
-            "name": "ScoreBoard",
+            "name": "ClipPathEditor",
             "url": "http://localhost:3000",
             "webRoot": "${workspaceFolder}"
         }
