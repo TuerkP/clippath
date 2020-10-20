@@ -93,11 +93,12 @@ class ClipPathBilder extends Component<Props, State> {
   };
 
   private movePoint = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const {zoom} = this.state;
     const points = [...this.state.points]; // Kopie von Points erstellen
     const activePoint = points[this.state.active];
     points[this.state.active] = {
-      top: activePoint.top + event.movementY,
-      left: activePoint.left + event.movementX,
+      top: activePoint.top + event.movementY / zoom,
+      left: activePoint.left + event.movementX / zoom,
       unit: "px",
     };
     this.setState({points});
