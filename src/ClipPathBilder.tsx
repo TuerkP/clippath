@@ -17,8 +17,6 @@ const styles = () =>
       overflow: "auto",
       border: "1px solid black",
       position: "relative",
-      width: "500px",
-      height: "500px",
     },
     container: {
       cursor: "crosshair",
