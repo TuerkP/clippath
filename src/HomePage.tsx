@@ -1,6 +1,6 @@
 import {Button, createStyles, withStyles, WithStyles} from "@material-ui/core";
 import React, {Component} from "react";
-import ClipPathBilder, {Point} from "./ClipPathBilder";
+import ClipPathBuilder, {Point} from "./ClipPathBuilder";
 
 const styles = () =>
   createStyles({
@@ -57,7 +57,7 @@ class HomePage extends Component<Props, State> {
     return (
       <div className={classes.root}>
         <div className={classes.clipPathBilderContainer}>
-          <ClipPathBilder
+          <ClipPathBuilder
             src=""
             alt="sdf"
             points={points}

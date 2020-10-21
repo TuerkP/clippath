@@ -61,7 +61,7 @@ interface State {
   img: Dimension;
 }
 
-class ClipPathBilder extends Component<Props, State> {
+class ClipPathBuilder extends Component<Props, State> {
   public readonly state: State = {active: -1, img: {w: 0, h: 0}};
 
   private imgId: string = getUniqueId();
@@ -177,4 +177,4 @@ class ClipPathBilder extends Component<Props, State> {
   }
 }
 
-export default withStyles(styles)(ClipPathBilder);
+export default withStyles(styles)(ClipPathBuilder);
