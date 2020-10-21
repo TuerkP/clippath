@@ -67,10 +67,10 @@ class ClipPathBuilder extends Component<Props, State> {
   private imgId: string = getUniqueId();
 
   public componentDidMount = () => {
-    this.updateImageSize();
+    this.updateImg();
   };
 
-  private updateImageSize = () => {
+  private updateImg = () => {
     const img = document.getElementById(this.imgId);
     if (img && img.clientHeight && img.clientWidth) {
       this.setState({img: {w: img.clientWidth, h: img.clientHeight}});
@@ -168,7 +168,13 @@ class ClipPathBuilder extends Component<Props, State> {
           onMouseUp={onMouseUp}
           onMouseMove={onMouseMove}
         >
-          <img src={src} alt={alt} className={classes.img} id={this.imgId} />
+          <img
+            src={src}
+            alt={alt}
+            className={classes.img}
+            id={this.imgId}
+            onLoad={this.updateImg}
+          />
           <svg className={classes.svg}>{points.map(this.createLine)}</svg>
           {points.map(this.createPoint)}
         </div>
