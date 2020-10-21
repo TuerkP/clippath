@@ -1,7 +1,7 @@
-import {createStyles, withStyles, WithStyles, Button} from "@material-ui/core";
+import {Button, createStyles, withStyles, WithStyles} from "@material-ui/core";
 import {CSSProperties} from "@material-ui/core/styles/withStyles";
 import React, {Component} from "react";
-import {POINT_BOX_SIZE} from "./Constants";
+import {POINT_BOX_BORDER, POINT_BOX_SIZE} from "./Constants";
 
 const styles = () =>
   createStyles({
@@ -31,7 +31,7 @@ const styles = () =>
       position: "absolute",
       width: `${POINT_BOX_SIZE}px`,
       height: `${POINT_BOX_SIZE}px`,
-      border: "2px solid green",
+      border: `${POINT_BOX_BORDER}px solid green`,
       cursor: "grab",
     },
     svg: {
@@ -67,23 +67,48 @@ interface Props extends WithStyles<typeof styles> {
   onSave?: (points: Point[]) => void;
 }
 
+interface Dimension {
+  w: number;
+  h: number;
+}
+
 interface State {
   points: Point[];
   active: number;
   zoom: number;
+  img: Dimension;
 }
 
 class ClipPathBilder extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = {points: props.points ?? [], active: -1, zoom: 1};
+    this.state = {points: props.points ?? [], active: -1, zoom: 1, img: {w: 0, h: 0}};
   }
 
+  public componentDidMount = () => {
+    const img = this.getImageSize();
+    this.setState({img});
+  };
+
+  private getImageSize = (): Dimension => {
+    // TODO: IMAGE als ID ist doof
+    const img = document.getElementById("IMAGE");
+    if (img && img.clientHeight && img.clientWidth) {
+      return {w: img.clientWidth, h: img.clientHeight};
+    }
+    return {w: 0, h: 0};
+  };
+
+  private round = (value: number, fractionDigits = 3) => Number(value.toFixed(fractionDigits));
+
+  private toPercent = (part: number, total: number) => this.round((part / total) * 100);
+
   private addPoint = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const {img, zoom} = this.state;
     const newPoint: Point = {
-      top: event.nativeEvent.offsetY,
-      left: event.nativeEvent.offsetX,
-      unit: "px",
+      top: this.toPercent(event.nativeEvent.offsetY * zoom, img.h * zoom),
+      left: this.toPercent(event.nativeEvent.offsetX * zoom, img.w * zoom),
+      unit: "%",
     };
     this.setState({points: [...this.state.points, newPoint]});
   };
@@ -93,13 +118,14 @@ class ClipPathBilder extends Component<Props, State> {
   };
 
   private movePoint = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    const {zoom} = this.state;
+    const {zoom, img} = this.state;
     const points = [...this.state.points]; // Kopie von Points erstellen
     const activePoint = points[this.state.active];
+
     points[this.state.active] = {
-      top: activePoint.top + event.movementY / zoom,
-      left: activePoint.left + event.movementX / zoom,
-      unit: "px",
+      top: this.round(activePoint.top + this.toPercent(event.movementY, img.h * zoom)),
+      left: this.round(activePoint.left + this.toPercent(event.movementX, img.w * zoom)),
+      unit: "%",
     };
     this.setState({points});
   };
@@ -112,18 +138,29 @@ class ClipPathBilder extends Component<Props, State> {
     if (points.length < 2) return null;
     const next = idx === points.length - 1 ? points[0] : points[idx + 1];
     const key = `${point.top}x${point.left}_line`;
-    return (
-      <line key={key} x1={point.left} y1={point.top} x2={next.left} y2={next.top} stroke="white" />
-    );
+
+    const pos = {
+      x1: `${point.left}${point.unit}`,
+      y1: `${point.top}${point.unit}`,
+      x2: `${next.left}${next.unit}`,
+      y2: `${next.top}${next.unit}`,
+    };
+
+    return <line key={key} {...pos} stroke="white" />;
   };
 
   private createPoint = (point: Point, idx: number) => {
     const {classes} = this.props;
-    const {active} = this.state;
+    const {active, zoom, img} = this.state;
     const key = `${point.top}x${point.left}_box`;
+
+    const radius = 0.5 * (POINT_BOX_SIZE + 4) * zoom;
+    const topBoxOffset = this.toPercent(radius, img.h * zoom);
+    const leftBoxOffset = this.toPercent(radius, img.w * zoom);
+
     const style = {
-      top: point.top - (0.5 * POINT_BOX_SIZE + 2), // 2px fadenkreuz
-      left: point.left - (0.5 * POINT_BOX_SIZE + 2), // 2px fadenkreuz
+      top: `${point.top - topBoxOffset}${point.unit}`,
+      left: `${point.left - leftBoxOffset}${point.unit}`,
       cursor: idx === active ? "grabbing" : "grab",
     };
     return (
@@ -133,7 +170,7 @@ class ClipPathBilder extends Component<Props, State> {
 
   private onSave = () => {
     const {onSave} = this.props;
-    console.log(this.state.points.map((p) => `${p.top}px ${p.left}px`).join(", "));
+    console.log(this.state.points.map((p) => `${p.top}${p.unit} ${p.left}${p.unit}`).join(", "));
     if (onSave !== undefined) {
       onSave(this.state.points);
     }
@@ -166,7 +203,7 @@ class ClipPathBilder extends Component<Props, State> {
             onMouseUp={active === -1 ? this.addPoint : this.releasePoint}
             onMouseMove={active > -1 ? this.movePoint : () => false}
           >
-            <img src={src} alt={alt} className={classes.img} />
+            <img src={src} alt={alt} className={classes.img} id="IMAGE" />
             <svg className={classes.svg}>{points.map(this.createLine)}</svg>
             {points.map(this.createPoint)}
           </div>
