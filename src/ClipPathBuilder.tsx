@@ -35,6 +35,11 @@ const styles = () =>
       width: "100%",
       height: "100%",
     },
+    path: {
+      fill: "none",
+      stroke: "white",
+      strokeWidth: "0.1",
+    },
   });
 
 export interface Point {
@@ -115,21 +120,6 @@ class ClipPathBuilder extends Component<Props, State> {
     this.setState({active: -1});
   };
 
-  private createLine = (point: Point, idx: number, points: Point[]) => {
-    if (points.length < 2) return null;
-    const next = idx === points.length - 1 ? points[0] : points[idx + 1];
-    const key = `${point.top}x${point.left}_line`;
-
-    const pos = {
-      x1: `${point.left}${point.unit}`,
-      y1: `${point.top}${point.unit}`,
-      x2: `${next.left}${next.unit}`,
-      y2: `${next.top}${next.unit}`,
-    };
-
-    return <line key={key} {...pos} stroke="white" />;
-  };
-
   private createPoint = (point: Point, idx: number) => {
     const {classes, zoom} = this.props;
     const {active, img} = this.state;
@@ -143,10 +133,26 @@ class ClipPathBuilder extends Component<Props, State> {
       top: `${point.top - topBoxOffset}${point.unit}`,
       left: `${point.left - leftBoxOffset}${point.unit}`,
       cursor: idx === active ? "grabbing" : "grab",
+      display: active > -1 && idx !== active ? "none" : "block",
     };
     return (
       <div key={key} style={style} className={classes.point} onMouseDown={this.grabPoint(idx)} />
     );
+  };
+
+  /**
+   https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
+   */
+  private createPathCommands = () => {
+    const {points} = this.props;
+    if (points.length > 1) {
+      const d = [
+        `M ${points[0].left}, ${points[0].top}`, // M: Startpunkt setzen
+        ...points.map((p) => `L ${p.left},${p.top}`), // L: Punkte verbinden
+        "z", // z: Endpunkt mit Startpunkt verbinden
+      ];
+      return d.join(" ");
+    }
   };
 
   render() {
@@ -175,7 +181,9 @@ class ClipPathBuilder extends Component<Props, State> {
             id={this.imgId}
             onLoad={this.updateImg}
           />
-          <svg className={classes.svg}>{points.map(this.createLine)}</svg>
+          <svg className={classes.svg} viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path className={classes.path} d={this.createPathCommands()} />
+          </svg>
           {points.map(this.createPoint)}
         </div>
       </div>
