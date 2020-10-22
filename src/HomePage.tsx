@@ -52,7 +52,7 @@ class HomePage extends Component<Props, State> {
 
   private onDelete = () => this.setState({points: []});
 
-  private onZoomIn = () => this.setState({zoom: this.state.zoom + 5});
+  private onZoomIn = () => this.setState({zoom: this.state.zoom + 0.2});
 
   private onZoomOut = () => this.setState({zoom: this.state.zoom - 0.2});
 
