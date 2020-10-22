@@ -68,7 +68,7 @@ interface State {
 }
 
 class ClipPathBuilder extends Component<Props, State> {
-  static defaultProps: Partial<Props> = {hideBoxes: false};
+  static defaultProps = {hideBoxes: false};
   public readonly state: State = {active: -1, img: {w: 0, h: 0}};
 
   private imgId: string = getUniqueId();
