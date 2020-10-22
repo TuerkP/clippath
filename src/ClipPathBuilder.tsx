@@ -58,6 +58,7 @@ interface Props extends WithStyles<typeof styles> {
   alt: string;
   zoom: number;
   points: Point[];
+  hideBoxes: boolean;
   onChange: (points: Point[]) => void;
 }
 
@@ -67,6 +68,7 @@ interface State {
 }
 
 class ClipPathBuilder extends Component<Props, State> {
+  static defaultProps: Partial<Props> = {hideBoxes: false};
   public readonly state: State = {active: -1, img: {w: 0, h: 0}};
 
   private imgId: string = getUniqueId();
@@ -121,7 +123,7 @@ class ClipPathBuilder extends Component<Props, State> {
   };
 
   private createPoint = (point: Point, idx: number) => {
-    const {classes, zoom} = this.props;
+    const {classes, zoom, hideBoxes} = this.props;
     const {active, img} = this.state;
     const key = getUniqueId();
 
@@ -133,7 +135,7 @@ class ClipPathBuilder extends Component<Props, State> {
       top: `${point.top - topBoxOffset}${point.unit}`,
       left: `${point.left - leftBoxOffset}${point.unit}`,
       cursor: idx === active ? "grabbing" : "grab",
-      display: active > -1 && idx !== active ? "none" : "block",
+      display: hideBoxes || (active > -1 && idx !== active) ? "none" : "block",
     };
     return (
       <div key={key} style={style} className={classes.point} onMouseDown={this.grabPoint(idx)} />
@@ -141,7 +143,8 @@ class ClipPathBuilder extends Component<Props, State> {
   };
 
   /**
-   https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
+   * Erstellt das Pfadkommando (d) für einen Pfad eines SVG. Eine Beschreibung findet sich hier:
+   * https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
    */
   private createPathCommands = () => {
     const {points} = this.props;
