@@ -26,6 +26,7 @@ const styles = () =>
       width: `${POINT_BOX_SIZE}px`,
       height: `${POINT_BOX_SIZE}px`,
       border: `${POINT_BOX_BORDER}px solid green`,
+      borderRadius: "50%",
       cursor: "grab",
     },
     svg: {
@@ -127,7 +128,7 @@ class ClipPathBuilder extends Component<Props, State> {
     const {active, img} = this.state;
     const key = getUniqueId();
 
-    const radius = 0.5 * (POINT_BOX_SIZE + 4) * zoom;
+    const radius = 0.5 * (POINT_BOX_SIZE + 2 * POINT_BOX_BORDER) * zoom;
     const topBoxOffset = this.toPercent(radius, img.h * zoom);
     const leftBoxOffset = this.toPercent(radius, img.w * zoom);
 
@@ -136,6 +137,7 @@ class ClipPathBuilder extends Component<Props, State> {
       left: `${point.left - leftBoxOffset}${point.unit}`,
       cursor: idx === active ? "grabbing" : "grab",
       display: hideBoxes || (active > -1 && idx !== active) ? "none" : "block",
+      transform: `scale(${1 / zoom})`,
     };
     return (
       <div key={key} style={style} className={classes.point} onMouseDown={this.grabPoint(idx)} />

@@ -31,6 +31,29 @@ const styles = () =>
         marginRight: "0px",
       },
     },
+    previewContainer: {
+      display: "flex",
+      justifyContent: "center",
+    },
+    preview: {
+      border: "1px solid black",
+      position: "relative",
+      width: "fit-content",
+      height: "fit-content",
+    },
+    clickArea: {
+      width: "100%",
+      height: "100%",
+      top: 0,
+      left: 0,
+      position: "absolute",
+      display: "block",
+      cursor: "pointer",
+      "&:hover": {
+        background: "white",
+        opacity: 0.4,
+      },
+    },
   });
 
 type Props = WithStyles<typeof styles>;
@@ -39,20 +62,24 @@ interface State {
   points: Point[];
   zoom: number;
   hideBoxes: boolean;
+  savedPoints: Point[][];
 }
 
 class HomePage extends Component<Props, State> {
-  public readonly state: State = {points: [], zoom: 1, hideBoxes: false};
+  public readonly state: State = {points: [], zoom: 1, hideBoxes: false, savedPoints: []};
 
-  private pointToStr = (point: Point) => `${point.top}${point.unit} ${point.left}${point.unit}`;
+  private pointToStr = (point: Point) => `${point.left}${point.unit} ${point.top}${point.unit}`;
 
   private onChange = (points: Point[]) => this.setState({points: points});
 
-  private onSave = () => console.log(this.state.points.map(this.pointToStr).join(", "));
+  private onSave = () => {
+    const points = [...this.state.points];
+    this.setState({savedPoints: [...this.state.savedPoints, points], points: []});
+  };
 
   private onDelete = () => this.setState({points: []});
 
-  private onZoomIn = () => this.setState({zoom: this.state.zoom + 0.2});
+  private onZoomIn = () => this.setState({zoom: this.state.zoom + 5});
 
   private onZoomOut = () => this.setState({zoom: this.state.zoom - 0.2});
 
@@ -70,7 +97,7 @@ class HomePage extends Component<Props, State> {
         <div className={classes.clipPathBilderContainer}>
           <ClipPathBuilder
             src=""
-            alt="sdf"
+            alt="editor"
             points={points}
             zoom={zoom}
             hideBoxes={hideBoxes}
@@ -104,6 +131,21 @@ class HomePage extends Component<Props, State> {
               label="Boxen ausblenden"
               labelPlacement="start"
             />
+          </div>
+        </div>
+        <div className={classes.previewContainer}>
+          <div className={classes.preview}>
+            <img
+              src=""
+              alt="preview"
+            />
+            {this.state.savedPoints.map((points, idx) => (
+              <div
+                key={idx}
+                style={{clipPath: `polygon(${points.map(this.pointToStr).join(", ")})`}}
+                className={classes.clickArea}
+              />
+            ))}
           </div>
         </div>
       </div>
