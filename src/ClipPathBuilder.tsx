@@ -65,12 +65,13 @@ interface Props extends WithStyles<typeof styles> {
 
 interface State {
   active: number;
+  mouseDown: boolean;
   img: Dimension;
 }
 
 class ClipPathBuilder extends Component<Props, State> {
   static defaultProps = {hideBoxes: false};
-  public readonly state: State = {active: -1, img: {w: 0, h: 0}};
+  public readonly state: State = {active: -1, mouseDown: false, img: {w: 0, h: 0}};
 
   private imgId: string = getUniqueId();
 
@@ -120,7 +121,7 @@ class ClipPathBuilder extends Component<Props, State> {
   };
 
   private releasePoint = () => {
-    this.setState({active: -1});
+    this.setState({active: -1, mouseDown: false});
   };
 
   private createPoint = (point: Point, idx: number) => {
@@ -160,24 +161,43 @@ class ClipPathBuilder extends Component<Props, State> {
     }
   };
 
+  private onMouseDown = () => {
+    this.setState({mouseDown: true});
+  };
+
+  private onMouseUp = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const {active, mouseDown} = this.state;
+    if (active === -1 && mouseDown) {
+      this.addPoint(event);
+      this.setState({mouseDown: false});
+    } else {
+      this.releasePoint();
+    }
+  };
+
+  private onMouseMove = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) =>
+    this.state.active > -1 ? this.movePoint(event) : () => false;
+
+  private onMouseLeave = () => {
+    this.releasePoint();
+  };
+
   render() {
     const {src, alt, points, zoom, classes} = this.props;
-    const {active} = this.state;
     const zoomStyle: CSSProperties = {
       transform: `scale(${zoom})`,
       transformOrigin: "0 0",
     };
-
-    const onMouseUp = active === -1 ? this.addPoint : this.releasePoint;
-    const onMouseMove = active > -1 ? this.movePoint : () => false;
 
     return (
       <div className={classes.scrollContainer}>
         <div
           className={classes.container}
           style={zoomStyle}
-          onMouseUp={onMouseUp}
-          onMouseMove={onMouseMove}
+          onMouseUp={this.onMouseUp}
+          onMouseDown={this.onMouseDown}
+          onMouseLeave={this.onMouseLeave}
+          onMouseMove={this.onMouseMove}
         >
           <img
             src={src}
