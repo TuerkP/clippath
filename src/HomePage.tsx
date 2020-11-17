@@ -1,11 +1,4 @@
-import {
-  Button,
-  createStyles,
-  FormControlLabel,
-  Switch,
-  withStyles,
-  WithStyles
-} from "@material-ui/core";
+import {Button, createStyles, withStyles, WithStyles} from "@material-ui/core";
 import React, {Component} from "react";
 import ClipPathBuilder, {Point} from "./ClipPathBuilder";
 
@@ -32,6 +25,7 @@ const styles = () =>
       },
     },
     previewContainer: {
+      marginTop: "10px",
       display: "flex",
       justifyContent: "center",
     },
@@ -61,12 +55,11 @@ type Props = WithStyles<typeof styles>;
 interface State {
   points: Point[];
   zoom: number;
-  hideBoxes: boolean;
   savedPoints: Point[][];
 }
 
 class HomePage extends Component<Props, State> {
-  public readonly state: State = {points: [], zoom: 1, hideBoxes: false, savedPoints: []};
+  public readonly state: State = {points: [], zoom: 1, savedPoints: []};
 
   private pointToStr = (point: Point) => `${point.left}% ${point.top}%`;
 
@@ -79,18 +72,15 @@ class HomePage extends Component<Props, State> {
 
   private onDelete = () => this.setState({points: []});
 
-  private onZoomIn = () => this.setState({zoom: this.state.zoom + 5});
+  private onZoomIn = () => this.setState({zoom: this.state.zoom + 0.2});
 
   private onZoomOut = () => this.setState({zoom: this.state.zoom - 0.2});
 
   private onZoomReset = () => this.setState({zoom: 1});
 
-  private onHideBoxes = (event: React.ChangeEvent<HTMLInputElement>) =>
-    this.setState({hideBoxes: event.target.checked});
-
   render() {
     const {classes} = this.props;
-    const {points, zoom, hideBoxes} = this.state;
+    const {points, zoom} = this.state;
 
     return (
       <div className={classes.root}>
@@ -100,7 +90,6 @@ class HomePage extends Component<Props, State> {
             alt="editor"
             points={points}
             zoom={zoom}
-            hideBoxes={hideBoxes}
             onChange={this.onChange}
           />
         </div>
@@ -123,14 +112,6 @@ class HomePage extends Component<Props, State> {
             <Button className={classes.button} variant="outlined" onClick={this.onDelete}>
               Löschen
             </Button>
-          </div>
-          <div className={classes.buttonContainer}>
-            <FormControlLabel
-              value="start"
-              control={<Switch color="primary" onChange={this.onHideBoxes} />}
-              label="Boxen ausblenden"
-              labelPlacement="start"
-            />
           </div>
         </div>
         <div className={classes.previewContainer}>
