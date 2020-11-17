@@ -44,7 +44,6 @@ const styles = () =>
   });
 
 export interface Point {
-  unit: string;
   top: number;
   left: number;
 }
@@ -101,7 +100,6 @@ class ClipPathBuilder extends Component<Props, State> {
     const newPoint: Point = {
       top: this.toPercent(event.nativeEvent.offsetY * zoom, img.h * zoom),
       left: this.toPercent(event.nativeEvent.offsetX * zoom, img.w * zoom),
-      unit: "%",
     };
     onChange([...points, newPoint]);
   };
@@ -127,7 +125,6 @@ class ClipPathBuilder extends Component<Props, State> {
           const activePoint: Point = {
             top: this.round(points[active].top + this.toPercent(this.movement.y, img.h * zoom)),
             left: this.round(points[active].left + this.toPercent(this.movement.x, img.w * zoom)),
-            unit: "%",
           };
           d.value = this.createPathCommands(active, activePoint);
         }
@@ -146,7 +143,6 @@ class ClipPathBuilder extends Component<Props, State> {
       points[active] = {
         top: this.round(activePoint.top + this.toPercent(this.movement.y, img.h * zoom)),
         left: this.round(activePoint.left + this.toPercent(this.movement.x, img.w * zoom)),
-        unit: "%",
       };
       onChange(points);
       this.setState({active: -1, mouseDown: false});
@@ -164,8 +160,8 @@ class ClipPathBuilder extends Component<Props, State> {
     const leftBoxOffset = this.toPercent(radius, img.w * zoom);
 
     const style = {
-      top: `${point.top - topBoxOffset}${point.unit}`,
-      left: `${point.left - leftBoxOffset}${point.unit}`,
+      top: `${point.top - topBoxOffset}%`,
+      left: `${point.left - leftBoxOffset}%`,
       cursor: idx === active ? "grabbing" : "grab",
       display: hideBoxes || (active > -1 && idx !== active) ? "none" : "block",
       transform: `scale(${1 / zoom})`,

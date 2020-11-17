@@ -68,7 +68,7 @@ interface State {
 class HomePage extends Component<Props, State> {
   public readonly state: State = {points: [], zoom: 1, hideBoxes: false, savedPoints: []};
 
-  private pointToStr = (point: Point) => `${point.left}${point.unit} ${point.top}${point.unit}`;
+  private pointToStr = (point: Point) => `${point.left}% ${point.top}%`;
 
   private onChange = (points: Point[]) => this.setState({points: points});
 
