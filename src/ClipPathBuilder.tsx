@@ -94,6 +94,15 @@ class ClipPathBuilder extends Component<Props, State> {
 
   private toPercent = (part: number, total: number) => this.round((part / total) * 100);
 
+  private createActivePoint = (): Point => {
+    const {active, img} = this.state;
+    const {points, zoom} = this.props;
+    return {
+      top: this.round(points[active].top + this.toPercent(this.movement.y, img.h * zoom)),
+      left: this.round(points[active].left + this.toPercent(this.movement.x, img.w * zoom)),
+    };
+  };
+
   private addPoint = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const {points, zoom, onChange} = this.props;
     const {img} = this.state;
@@ -109,7 +118,7 @@ class ClipPathBuilder extends Component<Props, State> {
   };
 
   private movePoint = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    if (this.activeRef && this.activeRef.current) {
+    if (this.activeRef.current) {
       const {zoom} = this.props;
       const x = this.movement.x + event.movementX;
       const y = this.movement.y + event.movementY;
@@ -120,30 +129,19 @@ class ClipPathBuilder extends Component<Props, State> {
       if (this.svgPathRef.current) {
         const d = this.svgPathRef.current.attributes.getNamedItem("d");
         if (d) {
-          const {active, img} = this.state;
-          const {points} = this.props;
-          const activePoint: Point = {
-            top: this.round(points[active].top + this.toPercent(this.movement.y, img.h * zoom)),
-            left: this.round(points[active].left + this.toPercent(this.movement.x, img.w * zoom)),
-          };
-          d.value = this.createPathCommands(active, activePoint);
+          d.value = this.createPathCommands(this.createActivePoint());
         }
       }
     }
   };
 
   private releasePoint = () => {
-    const {zoom, onChange} = this.props;
-    const {img, active} = this.state;
+    const {onChange} = this.props;
+    const {active} = this.state;
 
     if (active !== -1) {
       const points = [...this.props.points]; // Kopie von Points erstellen
-      const activePoint = points[active];
-
-      points[active] = {
-        top: this.round(activePoint.top + this.toPercent(this.movement.y, img.h * zoom)),
-        left: this.round(activePoint.left + this.toPercent(this.movement.x, img.w * zoom)),
-      };
+      points[active] = this.createActivePoint();
       onChange(points);
       this.setState({active: -1, mouseDown: false});
       this.movement = {x: 0, y: 0};
@@ -182,29 +180,19 @@ class ClipPathBuilder extends Component<Props, State> {
    * Erstellt das Pfadkommando (d) für einen Pfad eines SVG. Eine Beschreibung findet sich hier:
    * https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
    */
-  private createPathCommands = (activeIdx?: number, activePoint?: Point) => {
-    const {points} = this.props;
-    if (points.length > 1) {
-      const start
-        = activeIdx === 0 && activePoint
-          ? `M ${activePoint.left}, ${activePoint.top}`
-          : `M ${points[0].left}, ${points[0].top}`;
+  private createPathCommands = (activePoint?: Point) => {
+    const {active} = this.state;
+    const points = this.props.points.map((p, idx) => (idx === active ? activePoint ?? p : p));
 
+    if (points.length > 1) {
       const d = [
-        start, // M: Startpunkt setzen
-        ...points.map((p, idx) => {
-          if (idx === activeIdx && activePoint) {
-            return `L ${activePoint.left},${activePoint.top}`;
-          } else {
-            return `L ${p.left},${p.top}`;
-          }
-        }), // L: Punkte verbinden
+        `M ${points[0].left}, ${points[0].top}`, // M: Startpunkt setzen
+        ...points.map((p) => `L ${p.left},${p.top}`), // L: Punkte verbinden
         "z", // z: Endpunkt mit Startpunkt verbinden
       ];
       return d.join(" ");
-    } else {
-      return "";
     }
+    return "";
   };
 
   private onMouseDown = () => {
