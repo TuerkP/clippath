@@ -1,6 +1,7 @@
 import {makeStyles} from "@material-ui/core";
 import {CSSProperties} from "@material-ui/core/styles/withStyles";
 import DeleteIcon from "@material-ui/icons/Delete";
+import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import React, {useRef, useState} from "react";
 import {POINT_BOX_BORDER, POINT_BOX_SIZE} from "./Constants";
 import Menu, {MenuItem} from "./Menu";
@@ -29,9 +30,9 @@ const useStyles = makeStyles({
   },
   point: {
     position: "absolute",
+    border: `${POINT_BOX_BORDER}px solid`,
     width: `${POINT_BOX_SIZE}px`,
     height: `${POINT_BOX_SIZE}px`,
-    border: `${POINT_BOX_BORDER}px solid green`,
     borderRadius: "50%",
     cursor: "grab",
   },
@@ -152,7 +153,15 @@ function ClipPathBuilder(props: Props) {
     const topBoxOffset = toPercent(radius, img.h * zoom);
     const leftBoxOffset = toPercent(radius, img.w * zoom);
 
+    let color = "white";
+    if (idx === 0) {
+      color = "green";
+    } else if (idx === points.length - 1) {
+      color = "red";
+    }
+
     const style = {
+      borderColor: `${color}`,
       top: `${point.top - topBoxOffset}%`,
       left: `${point.left - leftBoxOffset}%`,
       cursor: idx === active ? "grabbing" : "grab",
@@ -173,6 +182,15 @@ function ClipPathBuilder(props: Props) {
   };
 
   const deletePoint = () => props.onChange(props.points.filter((__, idx) => idx !== menuIdx));
+
+  const setStartPoint = () => {
+    if (menuIdx !== undefined && menuIdx !== props.points.length - 1) {
+      const points = props.points
+        .slice(menuIdx + 1, props.points.length)
+        .concat(props.points.slice(0, menuIdx + 1));
+      props.onChange(points);
+    }
+  };
 
   /**
    * Erstellt das Pfadkommando (d) für einen Pfad eines SVG. Eine Beschreibung findet sich hier:
@@ -230,8 +248,11 @@ function ClipPathBuilder(props: Props) {
         {points.map(createPoint)}
       </div>
       <Menu open={menuIdx !== undefined} relativePosition={menuPos} onClose={hideMenu}>
+        <MenuItem icon={<PlayArrowIcon />} onClick={setStartPoint}>
+          Startpunkt
+        </MenuItem>
         <MenuItem icon={<DeleteIcon />} onClick={deletePoint}>
-          delete
+          Löschen
         </MenuItem>
       </Menu>
     </div>
