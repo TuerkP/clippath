@@ -29,6 +29,7 @@ const useMenuStyles = makeStyles({
     borderRadius: "4px",
     display: "flex",
     flexDirection: "column",
+    width: "fit-content",
   }),
 });
 
