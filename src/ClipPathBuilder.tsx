@@ -1,7 +1,9 @@
 import {makeStyles} from "@material-ui/core";
 import {CSSProperties} from "@material-ui/core/styles/withStyles";
+import DeleteIcon from "@material-ui/icons/Delete";
 import React, {useRef, useState} from "react";
 import {POINT_BOX_BORDER, POINT_BOX_SIZE} from "./Constants";
+import Menu, {MenuItem} from "./Menu";
 
 const round = (value: number, fractionDigits = 3) => Number(value.toFixed(fractionDigits));
 
@@ -16,6 +18,7 @@ const useStyles = makeStyles({
     position: "relative",
   },
   container: {
+    display: "relative",
     cursor: "crosshair",
     width: "fit-content",
     height: "fit-content",
@@ -51,6 +54,11 @@ export interface Point {
   left: number;
 }
 
+interface Position {
+  x: number;
+  y: number;
+}
+
 interface Props {
   src: string;
   alt: string;
@@ -61,14 +69,19 @@ interface Props {
 
 function ClipPathBuilder(props: Props) {
   const classes = useStyles();
+
   const activeRef = useRef() as React.MutableRefObject<HTMLDivElement>;
   const svgPathRef = useRef() as React.MutableRefObject<SVGPathElement>;
   const imageRef = useRef() as React.MutableRefObject<HTMLImageElement>;
+  const containerRef = useRef() as React.MutableRefObject<HTMLDivElement>;
+
   let movement = {x: 0, y: 0};
 
   const [active, setActive] = useState(-1);
   const [mouseDown, setMouseDown] = useState(false);
   const [img, setImg] = useState({w: 0, h: 0});
+  const [menuPos, setMenuPos] = useState<Position>({x: 0, y: 0});
+  const [menuIdx, setMenuIdx] = useState<number | undefined>();
 
   const updateImg = () => {
     const img = imageRef.current;
@@ -76,6 +89,17 @@ function ClipPathBuilder(props: Props) {
       setImg({w: img.clientWidth, h: img.clientHeight});
     }
   };
+
+  const showMenu = (idx: number) => (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    event.preventDefault();
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    setMenuPos({x, y});
+    setMenuIdx(idx);
+  };
+
+  const hideMenu = () => setMenuIdx(undefined);
 
   const createActivePoint = (): Point => ({
     top: round(props.points[active].top + toPercent(movement.y, img.h * props.zoom)),
@@ -143,9 +167,12 @@ function ClipPathBuilder(props: Props) {
         style={style}
         className={classes.point}
         onMouseDown={grabPoint(idx)}
+        onContextMenu={showMenu(idx)}
       />
     );
   };
+
+  const deletePoint = () => props.onChange(props.points.filter((__, idx) => idx !== menuIdx));
 
   /**
    * Erstellt das Pfadkommando (d) für einen Pfad eines SVG. Eine Beschreibung findet sich hier:
@@ -166,7 +193,9 @@ function ClipPathBuilder(props: Props) {
   };
 
   const onMouseUp = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    if (active === -1 && mouseDown) {
+    // event.button == 0     --> left mouse button
+    // menuIdx == undefined  --> keinen Punkt erstellen wenn Kontextmenü weggeklickt wird
+    if (active === -1 && mouseDown && event.button == 0 && menuIdx === undefined) {
       addPoint(event.nativeEvent.offsetX, event.nativeEvent.offsetY);
       setMouseDown(false);
     } else {
@@ -186,6 +215,7 @@ function ClipPathBuilder(props: Props) {
   return (
     <div className={classes.scrollContainer}>
       <div
+        ref={containerRef}
         className={classes.container}
         style={zoomStyle}
         onMouseUp={onMouseUp}
@@ -199,6 +229,11 @@ function ClipPathBuilder(props: Props) {
         </svg>
         {points.map(createPoint)}
       </div>
+      <Menu open={menuIdx !== undefined} relativePosition={menuPos} onClose={hideMenu}>
+        <MenuItem icon={<DeleteIcon />} onClick={deletePoint}>
+          delete
+        </MenuItem>
+      </Menu>
     </div>
   );
 }
