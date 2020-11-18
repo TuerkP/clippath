@@ -90,14 +90,12 @@ function HomePage() {
     if (areaIdx !== undefined) {
       setPoints(savedPoints[areaIdx]);
       setSavedPoints(savedPoints.filter((__, idx) => idx !== areaIdx));
-      hideMenu();
     }
   };
 
   const onDeleteArea = () => {
     if (areaIdx !== undefined) {
       setSavedPoints(savedPoints.filter((__, idx) => idx !== areaIdx));
-      hideMenu();
     }
   };
 
