@@ -249,7 +249,7 @@ function ClipPathBuilder(props: Props) {
       </div>
       <Menu open={menuIdx !== undefined} relativePosition={menuPos} onClose={hideMenu}>
         <MenuItem icon={<PlayArrowIcon />} onClick={setStartPoint}>
-          Startpunkt
+          Endpunkt
         </MenuItem>
         <MenuItem icon={<DeleteIcon />} onClick={deletePoint}>
           Löschen
