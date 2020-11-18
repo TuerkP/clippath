@@ -1,10 +1,20 @@
 import {Button, ClickAwayListener, makeStyles} from "@material-ui/core";
-import React from "react";
+import React, {useContext} from "react";
 
 interface Position {
   x: number;
   y: number;
 }
+
+type CloseEvent = React.MouseEvent<Document | HTMLButtonElement, MouseEvent>;
+
+interface MenuContext {
+  closeMenu: (event: CloseEvent) => void;
+}
+
+const menuContext = React.createContext<MenuContext>({
+  closeMenu: () => void 0,
+});
 
 interface StyleProps {
   pos: Position;
@@ -33,34 +43,41 @@ const useMenuItemStyles = makeStyles({
 interface Props {
   open: boolean;
   relativePosition: Position;
-  onClose: (event: React.MouseEvent<Document, MouseEvent>) => void;
-  children?: React.ReactNode[];
+  onClose: (event: CloseEvent) => void;
+  children?: React.ReactNode;
 }
 
 export default function Menu(props: Props) {
   const classes = useMenuStyles({pos: props.relativePosition});
   return props.open ? (
     <ClickAwayListener onClickAway={props.onClose}>
-      <div className={classes.container}>{props.children}</div>
+      <div className={classes.container}>
+        <menuContext.Provider value={{closeMenu: props.onClose}}>
+          {props.children}
+        </menuContext.Provider>
+      </div>
     </ClickAwayListener>
   ) : null;
 }
 
 interface MenuItemProps {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   children: string;
   onClick?: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
 }
 
 export function MenuItem(props: MenuItemProps) {
   const classes = useMenuItemStyles();
+
+  const ctx = useContext(menuContext);
+
+  const onClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    ctx.closeMenu(event);
+    props.onClick && props.onClick(event);
+  };
+
   return (
-    <Button
-      onClick={props.onClick}
-      startIcon={props.icon}
-      fullWidth={true}
-      className={classes.menuItem}
-    >
+    <Button onClick={onClick} startIcon={props.icon} fullWidth={true} className={classes.menuItem}>
       {props.children}
     </Button>
   );
