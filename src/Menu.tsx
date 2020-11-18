@@ -33,7 +33,7 @@ const useMenuItemStyles = makeStyles({
 interface Props {
   open: boolean;
   relativePosition: Position;
-  onClose: () => void;
+  onClose: (event: React.MouseEvent<Document, MouseEvent>) => void;
   children?: React.ReactNode[];
 }
 
