@@ -74,8 +74,12 @@ function HomePage() {
   const onChange = (points: Point[]) => setPoints(points);
 
   const onSave = () => {
-    setSavedPoints([...savedPoints, points]);
-    setPoints([]);
+    if (points.length >= 3) {
+      setSavedPoints([...savedPoints, points]);
+      setPoints([]);
+    } else {
+      console.warn("At least 3 points are required for a clickable area.");
+    }
   };
 
   const onDelete = () => setPoints([]);
@@ -135,7 +139,12 @@ function HomePage() {
           </Button>
         </div>
         <div className={classes.buttonContainer}>
-          <Button className={classes.button} variant="outlined" onClick={onSave}>
+          <Button
+            className={classes.button}
+            variant="outlined"
+            onClick={onSave}
+            disabled={points.length <= 2}
+          >
             Speichern
           </Button>
           <Button className={classes.button} variant="outlined" onClick={onDelete}>
