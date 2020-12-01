@@ -66,7 +66,7 @@ function HomePage() {
   const [points, setPoints] = useState<Point[]>([]);
   const [savedPoints, setSavedPoints] = useState<Point[][]>([]);
   const [zoom, setZoom] = useState(1);
-  const [previewPos, setPreviewPos] = useState<Position>({x: 0, y: 0});
+  const [menuPos, setMenuPos] = useState<Position | undefined>();
   const [areaIdx, setAreaIdx] = useState<number | undefined>(undefined);
 
   const pointToStr = (point: Point) => `${point.left}% ${point.top}%`;
@@ -108,12 +108,15 @@ function HomePage() {
       const rect = previewRef.current.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
-      setPreviewPos({x, y});
+      setMenuPos({x, y});
       setAreaIdx(areaIdx);
     }
   };
 
-  const hideMenu = () => setAreaIdx(undefined);
+  const hideMenu = () => {
+    setMenuPos(undefined); // erst Menu ausblenden, damit es nicht nochmal gerendert wird.
+    setAreaIdx(undefined);
+  };
 
   return (
     <div className={classes.root}>
@@ -163,14 +166,16 @@ function HomePage() {
               onClick={showMenu(areaIdx)}
             />
           ))}
-          <Menu open={areaIdx !== undefined} relativePosition={previewPos} onClose={hideMenu}>
-            <MenuItem onClick={onEditArea} icon={<EditIcon />}>
-              Bearbeiten
-            </MenuItem>
-            <MenuItem onClick={onDeleteArea} icon={<DeleteIcon />}>
-              Löschen
-            </MenuItem>
-          </Menu>
+          {menuPos && (
+            <Menu relativePosition={menuPos} onClose={hideMenu}>
+              <MenuItem onClick={onEditArea} icon={<EditIcon />}>
+                Bearbeiten
+              </MenuItem>
+              <MenuItem onClick={onDeleteArea} icon={<DeleteIcon />}>
+                Löschen
+              </MenuItem>
+            </Menu>
+          )}
         </div>
       </div>
     </div>

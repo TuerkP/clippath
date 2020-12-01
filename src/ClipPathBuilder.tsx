@@ -81,7 +81,7 @@ function ClipPathBuilder(props: Props) {
   const [active, setActive] = useState(-1);
   const [mouseDown, setMouseDown] = useState(false);
   const [img, setImg] = useState({w: 0, h: 0});
-  const [menuPos, setMenuPos] = useState<Position>({x: 0, y: 0});
+  const [menuPos, setMenuPos] = useState<Position | undefined>();
   const [menuIdx, setMenuIdx] = useState<number | undefined>();
 
   const updateImg = () => {
@@ -100,7 +100,10 @@ function ClipPathBuilder(props: Props) {
     setMenuIdx(idx);
   };
 
-  const hideMenu = () => setMenuIdx(undefined);
+  const hideMenu = () => {
+    setMenuPos(undefined); // erst Menu ausblenden, damit es nicht nochmal gerendert wird.
+    setMenuIdx(undefined);
+  };
 
   const createActivePoint = (): Point => ({
     top: round(props.points[active].top + toPercent(movement.y, img.h * props.zoom)),
@@ -247,14 +250,16 @@ function ClipPathBuilder(props: Props) {
         </svg>
         {points.map(createPoint)}
       </div>
-      <Menu open={menuIdx !== undefined} relativePosition={menuPos} onClose={hideMenu}>
-        <MenuItem icon={<PlayArrowIcon />} onClick={setStartPoint}>
-          Endpunkt
-        </MenuItem>
-        <MenuItem icon={<DeleteIcon />} onClick={deletePoint}>
-          Löschen
-        </MenuItem>
-      </Menu>
+      {menuPos && (
+        <Menu relativePosition={menuPos} onClose={hideMenu}>
+          <MenuItem icon={<PlayArrowIcon />} onClick={setStartPoint}>
+            Endpunkt
+          </MenuItem>
+          <MenuItem icon={<DeleteIcon />} onClick={deletePoint}>
+            Löschen
+          </MenuItem>
+        </Menu>
+      )}
     </div>
   );
 }

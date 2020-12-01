@@ -42,7 +42,6 @@ const useMenuItemStyles = makeStyles({
 });
 
 interface Props {
-  open: boolean;
   relativePosition: Position;
   onClose: (event: CloseEvent) => void;
   children?: React.ReactNode;
@@ -50,7 +49,7 @@ interface Props {
 
 export default function Menu(props: Props) {
   const classes = useMenuStyles({pos: props.relativePosition});
-  return props.open ? (
+  return (
     <ClickAwayListener onClickAway={props.onClose}>
       <div className={classes.container}>
         <menuContext.Provider value={{closeMenu: props.onClose}}>
@@ -58,7 +57,7 @@ export default function Menu(props: Props) {
         </menuContext.Provider>
       </div>
     </ClickAwayListener>
-  ) : null;
+  );
 }
 
 interface MenuItemProps {
