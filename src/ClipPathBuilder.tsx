@@ -60,6 +60,11 @@ interface Position {
   y: number;
 }
 
+interface PointContextMenuData {
+  position: Position;
+  pointIdx: number;
+}
+
 interface Props {
   src: string;
   alt: string;
@@ -81,8 +86,7 @@ function ClipPathBuilder(props: Props) {
   const [active, setActive] = useState(-1);
   const [mouseDown, setMouseDown] = useState(false);
   const [img, setImg] = useState({w: 0, h: 0});
-  const [menuPos, setMenuPos] = useState<Position | undefined>();
-  const [menuIdx, setMenuIdx] = useState<number | undefined>();
+  const [menuData, setMenuData] = useState<PointContextMenuData | undefined>();
 
   const updateImg = () => {
     const img = imageRef.current;
@@ -91,19 +95,15 @@ function ClipPathBuilder(props: Props) {
     }
   };
 
-  const showMenu = (idx: number) => (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const showMenu = (pointIdx: number) => (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     event.preventDefault();
     const rect = containerRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    setMenuPos({x, y});
-    setMenuIdx(idx);
+    setMenuData({position: {x, y}, pointIdx: pointIdx});
   };
 
-  const hideMenu = () => {
-    setMenuPos(undefined); // erst Menu ausblenden, damit es nicht nochmal gerendert wird.
-    setMenuIdx(undefined);
-  };
+  const hideMenu = () => setMenuData(undefined);
 
   const createActivePoint = (): Point => ({
     top: round(props.points[active].top + toPercent(movement.y, img.h * props.zoom)),
@@ -184,13 +184,14 @@ function ClipPathBuilder(props: Props) {
     );
   };
 
-  const deletePoint = () => props.onChange(props.points.filter((__, idx) => idx !== menuIdx));
+  const deletePoint = () =>
+    props.onChange(props.points.filter((__, idx) => idx !== menuData?.pointIdx));
 
   const setStartPoint = () => {
-    if (menuIdx !== undefined && menuIdx !== props.points.length - 1) {
+    if (menuData !== undefined && menuData.pointIdx !== props.points.length - 1) {
       const points = props.points
-        .slice(menuIdx + 1, props.points.length)
-        .concat(props.points.slice(0, menuIdx + 1));
+        .slice(menuData.pointIdx + 1, props.points.length)
+        .concat(props.points.slice(0, menuData.pointIdx + 1));
       props.onChange(points);
     }
   };
@@ -216,7 +217,7 @@ function ClipPathBuilder(props: Props) {
   const onMouseUp = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     // event.button == 0     --> left mouse button
     // menuIdx == undefined  --> keinen Punkt erstellen wenn Kontextmenü weggeklickt wird
-    if (active === -1 && mouseDown && event.button == 0 && menuIdx === undefined) {
+    if (active === -1 && mouseDown && event.button == 0 && menuData === undefined) {
       addPoint(event.nativeEvent.offsetX, event.nativeEvent.offsetY);
       setMouseDown(false);
     } else {
@@ -250,8 +251,8 @@ function ClipPathBuilder(props: Props) {
         </svg>
         {points.map(createPoint)}
       </div>
-      {menuPos && (
-        <Menu relativePosition={menuPos} onClose={hideMenu}>
+      {menuData && (
+        <Menu relativePosition={menuData.position} onClose={hideMenu}>
           <MenuItem icon={<PlayArrowIcon />} onClick={setStartPoint}>
             Endpunkt
           </MenuItem>

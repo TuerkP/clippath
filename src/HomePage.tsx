@@ -58,6 +58,11 @@ interface Position {
   y: number;
 }
 
+interface ClickAreaMenuData {
+  position: Position;
+  areaIdx: number;
+}
+
 function HomePage() {
   const classes = useStyles();
 
@@ -66,8 +71,7 @@ function HomePage() {
   const [points, setPoints] = useState<Point[]>([]);
   const [savedPoints, setSavedPoints] = useState<Point[][]>([]);
   const [zoom, setZoom] = useState(1);
-  const [menuPos, setMenuPos] = useState<Position | undefined>();
-  const [areaIdx, setAreaIdx] = useState<number | undefined>(undefined);
+  const [menuData, setMenuData] = useState<ClickAreaMenuData | undefined>();
 
   const pointToStr = (point: Point) => `${point.left}% ${point.top}%`;
 
@@ -91,15 +95,15 @@ function HomePage() {
   const onZoomReset = () => setZoom(1);
 
   const onEditArea = () => {
-    if (areaIdx !== undefined) {
-      setPoints(savedPoints[areaIdx]);
-      setSavedPoints(savedPoints.filter((__, idx) => idx !== areaIdx));
+    if (menuData !== undefined) {
+      setPoints(savedPoints[menuData.areaIdx]);
+      setSavedPoints(savedPoints.filter((__, idx) => idx !== menuData.areaIdx));
     }
   };
 
   const onDeleteArea = () => {
-    if (areaIdx !== undefined) {
-      setSavedPoints(savedPoints.filter((__, idx) => idx !== areaIdx));
+    if (menuData !== undefined) {
+      setSavedPoints(savedPoints.filter((__, idx) => idx !== menuData.areaIdx));
     }
   };
 
@@ -108,15 +112,11 @@ function HomePage() {
       const rect = previewRef.current.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
-      setMenuPos({x, y});
-      setAreaIdx(areaIdx);
+      setMenuData({position: {x, y}, areaIdx: areaIdx});
     }
   };
 
-  const hideMenu = () => {
-    setMenuPos(undefined); // erst Menu ausblenden, damit es nicht nochmal gerendert wird.
-    setAreaIdx(undefined);
-  };
+  const hideMenu = () => setMenuData(undefined);
 
   return (
     <div className={classes.root}>
@@ -166,8 +166,8 @@ function HomePage() {
               onClick={showMenu(areaIdx)}
             />
           ))}
-          {menuPos && (
-            <Menu relativePosition={menuPos} onClose={hideMenu}>
+          {menuData && (
+            <Menu relativePosition={menuData.position} onClose={hideMenu}>
               <MenuItem onClick={onEditArea} icon={<EditIcon />}>
                 Bearbeiten
               </MenuItem>
