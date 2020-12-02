@@ -18,7 +18,7 @@ const useStyles = makeStyles({
     border: "1px solid black",
     position: "relative",
   },
-  container: {
+  editor: {
     display: "relative",
     cursor: "crosshair",
     width: "fit-content",
@@ -55,6 +55,11 @@ export interface Point {
   left: number;
 }
 
+interface ImageInfo {
+  width: number;
+  height: number;
+}
+
 interface Position {
   x: number;
   y: number;
@@ -76,28 +81,27 @@ interface Props {
 function ClipPathBuilder(props: Props) {
   const classes = useStyles();
 
-  const activeRef = useRef() as React.MutableRefObject<HTMLDivElement>;
-  const svgPathRef = useRef() as React.MutableRefObject<SVGPathElement>;
-  const imageRef = useRef() as React.MutableRefObject<HTMLImageElement>;
-  const containerRef = useRef() as React.MutableRefObject<HTMLDivElement>;
+  const activePoint = useRef() as React.MutableRefObject<HTMLDivElement>;
+  const svgPath = useRef() as React.MutableRefObject<SVGPathElement>;
+  const image = useRef() as React.MutableRefObject<HTMLImageElement>;
+  const editor = useRef() as React.MutableRefObject<HTMLDivElement>;
 
   let movement = {x: 0, y: 0};
 
-  const [active, setActive] = useState(-1);
+  const [activeIdx, setActiveIdx] = useState(-1);
   const [mouseDown, setMouseDown] = useState(false);
-  const [img, setImg] = useState({w: 0, h: 0});
+  const [imageInfo, setImgInfo] = useState<ImageInfo>({width: 0, height: 0});
   const [menuData, setMenuData] = useState<PointContextMenuData | undefined>();
 
-  const updateImg = () => {
-    const img = imageRef.current;
-    if (img && img.clientHeight && img.clientWidth) {
-      setImg({w: img.clientWidth, h: img.clientHeight});
+  const updateImgInfo = () => {
+    if (image.current && image.current.clientHeight && image.current.clientWidth) {
+      setImgInfo({width: image.current.clientWidth, height: image.current.clientHeight});
     }
   };
 
   const showMenu = (pointIdx: number) => (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     event.preventDefault();
-    const rect = containerRef.current.getBoundingClientRect();
+    const rect = editor.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     setMenuData({position: {x, y}, pointIdx: pointIdx});
@@ -106,30 +110,30 @@ function ClipPathBuilder(props: Props) {
   const hideMenu = () => setMenuData(undefined);
 
   const createActivePoint = (): Point => ({
-    top: round(props.points[active].top + toPercent(movement.y, img.h * props.zoom)),
-    left: round(props.points[active].left + toPercent(movement.x, img.w * props.zoom)),
+    top: round(props.points[activeIdx].top + toPercent(movement.y, imageInfo.height * props.zoom)),
+    left: round(props.points[activeIdx].left + toPercent(movement.x, imageInfo.width * props.zoom)),
   });
 
   const addPoint = (posX: number, posY: number) => {
     const newPoint: Point = {
-      top: toPercent(posY * props.zoom, img.h * props.zoom),
-      left: toPercent(posX * props.zoom, img.w * props.zoom),
+      top: toPercent(posY * props.zoom, imageInfo.height * props.zoom),
+      left: toPercent(posX * props.zoom, imageInfo.width * props.zoom),
     };
     props.onChange([...props.points, newPoint]);
   };
 
-  const grabPoint = (idx: number) => () => setActive(idx);
+  const grabPoint = (idx: number) => () => setActiveIdx(idx);
 
   const movePoint = (moveX: number, moveY: number) => {
-    if (activeRef.current) {
+    if (activePoint.current) {
       const {zoom} = props;
       const x = movement.x + moveX;
       const y = movement.y + moveY;
       movement = {x, y};
 
-      activeRef.current.style.transform = `scale(${1 / zoom}) translate3d(${x}px, ${y}px, 0px)`;
-      if (svgPathRef.current) {
-        const d = svgPathRef.current.attributes.getNamedItem("d");
+      activePoint.current.style.transform = `scale(${1 / zoom}) translate3d(${x}px, ${y}px, 0px)`;
+      if (svgPath.current) {
+        const d = svgPath.current.attributes.getNamedItem("d");
         if (d) {
           d.value = createPathCommands(createActivePoint());
         }
@@ -138,11 +142,11 @@ function ClipPathBuilder(props: Props) {
   };
 
   const releasePoint = () => {
-    if (active !== -1) {
+    if (activeIdx !== -1) {
       const points = [...props.points]; // Kopie von Points erstellen
-      points[active] = createActivePoint();
+      points[activeIdx] = createActivePoint();
       props.onChange(points);
-      setActive(-1);
+      setActiveIdx(-1);
       setMouseDown(false);
       movement = {x: 0, y: 0};
     }
@@ -153,8 +157,8 @@ function ClipPathBuilder(props: Props) {
     const key = getUniqueId();
 
     const radius = 0.5 * (POINT_BOX_SIZE + 2 * POINT_BOX_BORDER) * zoom;
-    const topBoxOffset = toPercent(radius, img.h * zoom);
-    const leftBoxOffset = toPercent(radius, img.w * zoom);
+    const topBoxOffset = toPercent(radius, imageInfo.height * zoom);
+    const leftBoxOffset = toPercent(radius, imageInfo.width * zoom);
 
     let color = "white";
     if (idx === 0) {
@@ -167,11 +171,11 @@ function ClipPathBuilder(props: Props) {
       borderColor: `${color}`,
       top: `${point.top - topBoxOffset}%`,
       left: `${point.left - leftBoxOffset}%`,
-      cursor: idx === active ? "grabbing" : "grab",
-      display: active > -1 && idx !== active ? "none" : "block",
+      cursor: idx === activeIdx ? "grabbing" : "grab",
+      display: activeIdx > -1 && idx !== activeIdx ? "none" : "block",
       transform: `scale(${1 / zoom})`,
     };
-    const ref = active === idx ? {ref: activeRef} : {};
+    const ref = activeIdx === idx ? {ref: activePoint} : {};
     return (
       <div
         key={key}
@@ -201,7 +205,7 @@ function ClipPathBuilder(props: Props) {
    * https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
    */
   const createPathCommands = (activePoint?: Point) => {
-    const points = props.points.map((p, idx) => (idx === active ? activePoint ?? p : p));
+    const points = props.points.map((p, idx) => (idx === activeIdx ? activePoint ?? p : p));
 
     if (points.length > 1) {
       const d = [
@@ -217,7 +221,7 @@ function ClipPathBuilder(props: Props) {
   const onMouseUp = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     // event.button == 0     --> left mouse button
     // menuIdx == undefined  --> keinen Punkt erstellen wenn Kontextmenü weggeklickt wird
-    if (active === -1 && mouseDown && event.button == 0 && menuData === undefined) {
+    if (activeIdx === -1 && mouseDown && event.button == 0 && menuData === undefined) {
       addPoint(event.nativeEvent.offsetX, event.nativeEvent.offsetY);
       setMouseDown(false);
     } else {
@@ -226,7 +230,7 @@ function ClipPathBuilder(props: Props) {
   };
 
   const onMouseMove = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) =>
-    active > -1 ? movePoint(event.movementX, event.movementY) : () => false;
+    activeIdx > -1 ? movePoint(event.movementX, event.movementY) : () => false;
 
   const {src, alt, points, zoom} = props;
   const zoomStyle: CSSProperties = {
@@ -237,17 +241,17 @@ function ClipPathBuilder(props: Props) {
   return (
     <div className={classes.scrollContainer}>
       <div
-        ref={containerRef}
-        className={classes.container}
+        ref={editor}
+        className={classes.editor}
         style={zoomStyle}
         onMouseUp={onMouseUp}
         onMouseDown={() => setMouseDown(true)}
         onMouseLeave={releasePoint}
         onMouseMove={onMouseMove}
       >
-        <img src={src} alt={alt} ref={imageRef} className={classes.img} onLoad={updateImg} />
+        <img src={src} alt={alt} ref={image} className={classes.img} onLoad={updateImgInfo} />
         <svg className={classes.svg} viewBox="0 0 100 100" preserveAspectRatio="none">
-          <path ref={svgPathRef} className={classes.path} d={createPathCommands()} />
+          <path ref={svgPath} className={classes.path} d={createPathCommands()} />
         </svg>
         {points.map(createPoint)}
       </div>
