@@ -160,12 +160,7 @@ function ClipPathBuilder(props: Props) {
     const topBoxOffset = toPercent(radius, imageInfo.height * zoom);
     const leftBoxOffset = toPercent(radius, imageInfo.width * zoom);
 
-    let color = "white";
-    if (idx === 0) {
-      color = "green";
-    } else if (idx === points.length - 1) {
-      color = "red";
-    }
+    const color = idx === 0 || idx === points.length - 1 ? "red" : "white";
 
     const style = {
       borderColor: `${color}`,
